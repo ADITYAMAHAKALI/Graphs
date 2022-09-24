@@ -1,0 +1,1056 @@
+ncurses(3X)                                                          ncurses(3X)
+
+
+
+NNAAMMEE
+       nnccuurrsseess - CRT screen handling and optimization package
+
+SSYYNNOOPPSSIISS
+       ##iinncclluuddee <<ccuurrsseess..hh>>
+
+DDEESSCCRRIIPPTTIIOONN
+       The nnccuurrsseess library routines give the user a terminal-independent method
+       of updating character screens with reasonable optimization.  This
+       implementation is ``new curses'' (ncurses) and is the approved
+       replacement for 4.4BSD classic curses, which has been discontinued.  This
+       describes nnccuurrsseess version 5.7 (patch 20081102).
+
+       The nnccuurrsseess library emulates the ccuurrsseess(3X) library of System V Release 4
+       UNIX, and XPG4 (X/Open Portability Guide) curses (also known as XSI
+       curses).  XSI stands for X/Open System Interfaces Extension.  The nnccuurrsseess
+       library is freely redistributable in source form.  Differences from the
+       SVr4 curses are summarized under the EEXXTTEENNSSIIOONNSS and PPOORRTTAABBIILLIITTYY sections
+       below and described in detail in the respective EEXXTTEENNSSIIOONNSS, PPOORRTTAABBIILLIITTYY
+       and BBUUGGSS sections of individual man pages.
+
+       The nnccuurrsseess library also provides many useful extensions, i.e., features
+       which cannot be implemented by a simple add-on library but which require
+       access to the internals of the library.
+
+       A program using these routines must be linked with the --llnnccuurrsseess option,
+       or (if it has been generated) with the debugging library --llnnccuurrsseess__gg.
+       (Your system integrator may also have installed these libraries under the
+       names --llccuurrsseess and --llccuurrsseess__gg.)  The ncurses_g library generates trace
+       logs (in a file called 'trace' in the current directory) that describe
+       curses actions.  See also the section on AALLTTEERRNNAATTEE CCOONNFFIIGGUURRAATTIIOONNSS.
+
+       The nnccuurrsseess package supports: overall screen, window and pad
+       manipulation; output to windows and pads; reading terminal input; control
+       over terminal and ccuurrsseess input and output options; environment query
+       routines; color manipulation; use of soft label keys; terminfo
+       capabilities; and access to low-level terminal-manipulation routines.
+
+       The library uses the locale which the calling program has initialized.
+       That is normally done with sseettllooccaallee:
+
+             sseettllooccaallee((LLCC__AALLLL,, """"));;
+
+       If the locale is not initialized, the library assumes that characters are
+       printable as in ISO-8859-1, to work with certain legacy programs.  You
+       should initialize the locale and not rely on specific details of the
+       library when the locale has not been setup.
+
+       The function iinniittssccrr or nneewwtteerrmm must be called to initialize the library
+       before any of the other routines that deal with windows and screens are
+       used.  The routine eennddwwiinn must be called before exiting.
+
+       To get character-at-a-time input without echoing (most interactive,
+       screen oriented programs want this), the following sequence should be
+       used:
+
+             iinniittssccrr(());; ccbbrreeaakk(());; nnooeecchhoo(());;
+
+       Most programs would additionally use the sequence:
+
+             nnoonnll(());;
+             iinnttrrfflluusshh((ssttddssccrr,, FFAALLSSEE));;
+             kkeeyyppaadd((ssttddssccrr,, TTRRUUEE));;
+
+       Before a ccuurrsseess program is run, the tab stops of the terminal should be
+       set and its initialization strings, if defined, must be output.  This can
+       be done by executing the ttppuutt iinniitt command after the shell environment
+       variable TTEERRMM has been exported.  ttsseett((11)) is usually responsible for
+       doing this.  [See tteerrmmiinnffoo(5) for further details.]
+
+       The nnccuurrsseess library permits manipulation of data structures, called
+       _w_i_n_d_o_w_s, which can be thought of as two-dimensional arrays of characters
+       representing all or part of a CRT screen.  A default window called
+       ssttddssccrr, which is the size of the terminal screen, is supplied.  Others
+       may be created with nneewwwwiinn.
+
+       Note that ccuurrsseess does not handle overlapping windows, that's done by the
+       ppaanneell(3X) library.  This means that you can either use ssttddssccrr or divide
+       the screen into tiled windows and not using ssttddssccrr at all.  Mixing the
+       two will result in unpredictable, and undesired, effects.
+
+       Windows are referred to by variables declared as WWIINNDDOOWW **.  These data
+       structures are manipulated with routines described here and elsewhere in
+       the nnccuurrsseess manual pages.  Among those, the most basic routines are mmoovvee
+       and aaddddcchh.  More general versions of these routines are included with
+       names beginning with ww, allowing the user to specify a window.  The
+       routines not beginning with ww affect ssttddssccrr.
+
+       After using routines to manipulate a window, rreeffrreesshh is called, telling
+       ccuurrsseess to make the user's CRT screen look like ssttddssccrr.  The characters in
+       a window are actually of type cchhttyyppee, (character and attribute data) so
+       that other information about the character may also be stored with each
+       character.
+
+       Special windows called _p_a_d_s may also be manipulated.  These are windows
+       which are not constrained to the size of the screen and whose contents
+       need not be completely displayed.  See ccuurrss__ppaadd(3X) for more information.
+
+       In addition to drawing characters on the screen, video attributes and
+       colors may be supported, causing the characters to show up in such modes
+       as underlined, in reverse video, or in color on terminals that support
+       such display enhancements.  Line drawing characters may be specified to
+       be output.  On input, ccuurrsseess is also able to translate arrow and function
+       keys that transmit escape sequences into single values.  The video
+       attributes, line drawing characters, and input values use names, defined
+       in <<ccuurrsseess..hh>>, such as AA__RREEVVEERRSSEE, AACCSS__HHLLIINNEE, and KKEEYY__LLEEFFTT.
+
+       If the environment variables LLIINNEESS and CCOOLLUUMMNNSS are set, or if the program
+       is executing in a window environment, line and column information in the
+       environment will override information read by _t_e_r_m_i_n_f_o.  This would
+       affect a program running in an AT&T 630 layer, for example, where the
+       size of a screen is changeable (see EENNVVIIRROONNMMEENNTT).
+
+       If the environment variable TTEERRMMIINNFFOO is defined, any program using ccuurrsseess
+       checks for a local terminal definition before checking in the standard
+       place.  For example, if TTEERRMM is set to aatttt44442244, then the compiled
+       terminal definition is found in
+
+             //uussrr//sshhaarree//tteerrmmiinnffoo//aa//aatttt44442244.
+
+       (The aa is copied from the first letter of aatttt44442244 to avoid creation of
+       huge directories.)  However, if TTEERRMMIINNFFOO is set to $$HHOOMMEE//mmyytteerrmmss, ccuurrsseess
+       first checks
+
+             $$HHOOMMEE//mmyytteerrmmss//aa//aatttt44442244,
+
+       and if that fails, it then checks
+
+             //uussrr//sshhaarree//tteerrmmiinnffoo//aa//aatttt44442244.
+
+       This is useful for developing experimental definitions or when write
+       permission in //uussrr//sshhaarree//tteerrmmiinnffoo is not available.
+
+       The integer variables LLIINNEESS and CCOOLLSS are defined in <<ccuurrsseess..hh>> and will
+       be filled in by iinniittssccrr with the size of the screen.  The constants TTRRUUEE
+       and FFAALLSSEE have the values 11 and 00, respectively.
+
+       The ccuurrsseess routines also define the WWIINNDDOOWW ** variable ccuurrssccrr which is
+       used for certain low-level operations like clearing and redrawing a
+       screen containing garbage.  The ccuurrssccrr can be used in only a few
+       routines.
+
+   RRoouuttiinnee aanndd AArrgguummeenntt NNaammeess
+       Many ccuurrsseess routines have two or more versions.  The routines prefixed
+       with ww require a window argument.  The routines prefixed with pp require a
+       pad argument.  Those without a prefix generally use ssttddssccrr.
+
+       The routines prefixed with mmvv require a _y and _x coordinate to move to
+       before performing the appropriate action.  The mmvv routines imply a call
+       to mmoovvee before the call to the other routine.  The coordinate _y always
+       refers to the row (of the window), and _x always refers to the column.
+       The upper left-hand corner is always (0,0), not (1,1).
+
+       The routines prefixed with mmvvww take both a window argument and _x and _y
+       coordinates.  The window argument is always specified before the
+       coordinates.
+
+       In each case, _w_i_n is the window affected, and _p_a_d is the pad affected;
+       _w_i_n and _p_a_d are always pointers to type WWIINNDDOOWW.
+
+       Option setting routines require a Boolean flag _b_f with the value TTRRUUEE or
+       FFAALLSSEE; _b_f is always of type bbooooll.  Most of the data types used in the
+       library routines, such as WWIINNDDOOWW, SSCCRREEEENN, bbooooll, and cchhttyyppee are defined in
+       <<ccuurrsseess..hh>>.  Types used for the terminfo routines such as TTEERRMMIINNAALL are
+       defined in <<tteerrmm..hh>>.
+
+       This manual page describes functions which may appear in any
+       configuration of the library.  There are two common configurations of the
+       library:
+
+              ncurses
+                   the "normal" library, which handles 8-bit characters.  The
+                   normal (8-bit) library stores characters combined with
+                   attributes in cchhttyyppee data.
+
+                   Attributes alone (no corresponding character) may be stored
+                   in cchhttyyppee or the equivalent aattttrr__tt data.  In either case, the
+                   data is stored in something like an integer.
+
+                   Each cell (row and column) in a WWIINNDDOOWW is stored as a cchhttyyppee.
+
+              ncursesw
+                   the so-called "wide" library, which handles multibyte
+                   characters (See the section on AALLTTEERRNNAATTEE CCOONNFFIIGGUURRAATTIIOONNSS).
+                   The "wide" library includes all of the calls from the
+                   "normal" library.  It adds about one third more calls using
+                   data types which store multibyte characters:
+
+                   cccchhaarr__tt
+                        corresponds to cchhttyyppee.  However it is a structure,
+                        because more data is stored than can fit into an
+                        integer.  The characters are large enough to require a
+                        full integer value - and there may be more than one
+                        character per cell.  The video attributes and color are
+                        stored in separate fields of the structure.
+
+                        Each cell (row and column) in a WWIINNDDOOWW is stored as a
+                        cccchhaarr__tt.
+
+                   wwcchhaarr__tt
+                        stores a "wide" character.  Like cchhttyyppee, this may be an
+                        integer.
+
+                   wwiinntt__tt
+                        stores a wwcchhaarr__tt or WWEEOOFF - not the same, though both may
+                        have the same size.
+
+                   The "wide" library provides new functions which are analogous
+                   to functions in the "normal" library.  There is a naming
+                   convention which relates many of the normal/wide variants: a
+                   "_w" is inserted into the name.  For example, wwaaddddcchh becomes
+                   wwaadddd__wwcchh.
+
+   RRoouuttiinnee NNaammee IInnddeexx
+       The following table lists each ccuurrsseess routine and the name of the manual
+       page on which it is described.  Routines flagged with `*' are ncurses-
+       specific, not described by XPG4 or present in SVr4.
+
+                      ccuurrsseess Routine Name     Manual Page Name
+                      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+                      COLOR_PAIR              ccuurrss__ccoolloorr(3X)
+                      PAIR_NUMBER             ccuurrss__aattttrr(3X)
+                      _nc_free_and_exit       ccuurrss__mmeemmlleeaakkss(3X)*
+                      _nc_freeall             ccuurrss__mmeemmlleeaakkss(3X)*
+                      _nc_tracebits           ccuurrss__ttrraaccee(3X)*
+                      _traceattr              ccuurrss__ttrraaccee(3X)*
+                      _traceattr2             ccuurrss__ttrraaccee(3X)*
+                      _tracechar              ccuurrss__ttrraaccee(3X)*
+                      _tracechtype            ccuurrss__ttrraaccee(3X)*
+                      _tracechtype2           ccuurrss__ttrraaccee(3X)*
+                      _tracedump              ccuurrss__ttrraaccee(3X)*
+                      _tracef                 ccuurrss__ttrraaccee(3X)*
+                      _tracemouse             ccuurrss__ttrraaccee(3X)*
+                      add_wch                 ccuurrss__aadddd__wwcchh(3X)
+                      add_wchnstr             ccuurrss__aadddd__wwcchhssttrr(3X)
+                      add_wchstr              ccuurrss__aadddd__wwcchhssttrr(3X)
+                      addch                   ccuurrss__aaddddcchh(3X)
+                      addchnstr               ccuurrss__aaddddcchhssttrr(3X)
+                      addchstr                ccuurrss__aaddddcchhssttrr(3X)
+                      addnstr                 ccuurrss__aaddddssttrr(3X)
+                      addnwstr                ccuurrss__aaddddwwssttrr(3X)
+                      addstr                  ccuurrss__aaddddssttrr(3X)
+                      addwstr                 ccuurrss__aaddddwwssttrr(3X)
+                      assume_default_colors   ddeeffaauulltt__ccoolloorrss(3X)*
+                      attr_get                ccuurrss__aattttrr(3X)
+                      attr_off                ccuurrss__aattttrr(3X)
+                      attr_on                 ccuurrss__aattttrr(3X)
+                      attr_set                ccuurrss__aattttrr(3X)
+                      attroff                 ccuurrss__aattttrr(3X)
+                      attron                  ccuurrss__aattttrr(3X)
+                      attrset                 ccuurrss__aattttrr(3X)
+                      baudrate                ccuurrss__tteerrmmaattttrrss(3X)
+                      beep                    ccuurrss__bbeeeepp(3X)
+                      bkgd                    ccuurrss__bbkkggdd(3X)
+                      bkgdset                 ccuurrss__bbkkggdd(3X)
+                      bkgrnd                  ccuurrss__bbkkggrrnndd(3X)
+                      bkgrndset               ccuurrss__bbkkggrrnndd(3X)
+                      border                  ccuurrss__bboorrddeerr(3X)
+                      border_set              ccuurrss__bboorrddeerr__sseett(3X)
+                      box                     ccuurrss__bboorrddeerr(3X)
+                      box_set                 ccuurrss__bboorrddeerr__sseett(3X)
+                      can_change_color        ccuurrss__ccoolloorr(3X)
+                      cbreak                  ccuurrss__iinnooppttss(3X)
+                      chgat                   ccuurrss__aattttrr(3X)
+                      clear                   ccuurrss__cclleeaarr(3X)
+                      clearok                 ccuurrss__oouuttooppttss(3X)
+                      clrtobot                ccuurrss__cclleeaarr(3X)
+                      clrtoeol                ccuurrss__cclleeaarr(3X)
+                      color_content           ccuurrss__ccoolloorr(3X)
+                      color_set               ccuurrss__aattttrr(3X)
+                      copywin                 ccuurrss__oovveerrllaayy(3X)
+                      curs_set                ccuurrss__kkeerrnneell(3X)
+                      curses_version          ccuurrss__eexxtteenndd(3X)*
+                      def_prog_mode           ccuurrss__kkeerrnneell(3X)
+                      def_shell_mode          ccuurrss__kkeerrnneell(3X)
+                      define_key              ddeeffiinnee__kkeeyy(3X)*
+                      del_curterm             ccuurrss__tteerrmmiinnffoo(3X)
+                      delay_output            ccuurrss__uuttiill(3X)
+                      delch                   ccuurrss__ddeellcchh(3X)
+                      deleteln                ccuurrss__ddeelleetteellnn(3X)
+                      delscreen               ccuurrss__iinniittssccrr(3X)
+                      delwin                  ccuurrss__wwiinnddooww(3X)
+                      derwin                  ccuurrss__wwiinnddooww(3X)
+                      doupdate                ccuurrss__rreeffrreesshh(3X)
+                      dupwin                  ccuurrss__wwiinnddooww(3X)
+                      echo                    ccuurrss__iinnooppttss(3X)
+                      echo_wchar              ccuurrss__aadddd__wwcchh(3X)
+                      echochar                ccuurrss__aaddddcchh(3X)
+                      endwin                  ccuurrss__iinniittssccrr(3X)
+                      erase                   ccuurrss__cclleeaarr(3X)
+                      erasechar               ccuurrss__tteerrmmaattttrrss(3X)
+                      erasewchar              ccuurrss__tteerrmmaattttrrss(3X)
+                      filter                  ccuurrss__uuttiill(3X)
+                      flash                   ccuurrss__bbeeeepp(3X)
+                      flushinp                ccuurrss__uuttiill(3X)
+                      get_wch                 ccuurrss__ggeett__wwcchh(3X)
+                      get_wstr                ccuurrss__ggeett__wwssttrr(3X)
+                      getattrs                ccuurrss__aattttrr(3X)
+                      getbegx                 ccuurrss__lleeggaaccyy(3X)*
+                      getbegy                 ccuurrss__lleeggaaccyy(3X)*
+                      getbegyx                ccuurrss__ggeettyyxx(3X)
+                      getbkgd                 ccuurrss__bbkkggdd(3X)
+                      getbkgrnd               ccuurrss__bbkkggrrnndd(3X)
+                      getcchar                ccuurrss__ggeettcccchhaarr(3X)
+                      getch                   ccuurrss__ggeettcchh(3X)
+                      getcurx                 ccuurrss__lleeggaaccyy(3X)*
+                      getcury                 ccuurrss__lleeggaaccyy(3X)*
+                      getmaxx                 ccuurrss__lleeggaaccyy(3X)*
+                      getmaxy                 ccuurrss__lleeggaaccyy(3X)*
+                      getmaxyx                ccuurrss__ggeettyyxx(3X)
+                      getmouse                ccuurrss__mmoouussee(3X)*
+                      getn_wstr               ccuurrss__ggeett__wwssttrr(3X)
+                      getnstr                 ccuurrss__ggeettssttrr(3X)
+                      getparx                 ccuurrss__lleeggaaccyy(3X)*
+                      getpary                 ccuurrss__lleeggaaccyy(3X)*
+                      getparyx                ccuurrss__ggeettyyxx(3X)
+                      getstr                  ccuurrss__ggeettssttrr(3X)
+                      getsyx                  ccuurrss__kkeerrnneell(3X)
+                      getwin                  ccuurrss__uuttiill(3X)
+                      getyx                   ccuurrss__ggeettyyxx(3X)
+                      halfdelay               ccuurrss__iinnooppttss(3X)
+                      has_colors              ccuurrss__ccoolloorr(3X)
+                      has_ic                  ccuurrss__tteerrmmaattttrrss(3X)
+                      has_il                  ccuurrss__tteerrmmaattttrrss(3X)
+                      has_key                 ccuurrss__ggeettcchh(3X)*
+                      hline                   ccuurrss__bboorrddeerr(3X)
+                      hline_set               ccuurrss__bboorrddeerr__sseett(3X)
+                      idcok                   ccuurrss__oouuttooppttss(3X)
+                      idlok                   ccuurrss__oouuttooppttss(3X)
+                      immedok                 ccuurrss__oouuttooppttss(3X)
+                      in_wch                  ccuurrss__iinn__wwcchh(3X)
+                      in_wchnstr              ccuurrss__iinn__wwcchhssttrr(3X)
+                      in_wchstr               ccuurrss__iinn__wwcchhssttrr(3X)
+                      inch                    ccuurrss__iinncchh(3X)
+                      inchnstr                ccuurrss__iinncchhssttrr(3X)
+                      inchstr                 ccuurrss__iinncchhssttrr(3X)
+                      init_color              ccuurrss__ccoolloorr(3X)
+                      init_pair               ccuurrss__ccoolloorr(3X)
+                      initscr                 ccuurrss__iinniittssccrr(3X)
+                      innstr                  ccuurrss__iinnssttrr(3X)
+                      innwstr                 ccuurrss__iinnwwssttrr(3X)
+                      ins_nwstr               ccuurrss__iinnss__wwssttrr(3X)
+                      ins_wch                 ccuurrss__iinnss__wwcchh(3X)
+                      ins_wstr                ccuurrss__iinnss__wwssttrr(3X)
+                      insch                   ccuurrss__iinnsscchh(3X)
+                      insdelln                ccuurrss__ddeelleetteellnn(3X)
+                      insertln                ccuurrss__ddeelleetteellnn(3X)
+                      insnstr                 ccuurrss__iinnssssttrr(3X)
+                      insstr                  ccuurrss__iinnssssttrr(3X)
+                      instr                   ccuurrss__iinnssttrr(3X)
+                      intrflush               ccuurrss__iinnooppttss(3X)
+                      inwstr                  ccuurrss__iinnwwssttrr(3X)
+                      is_cleared              ccuurrss__ooppaaqquuee(3X)*
+                      is_idcok                ccuurrss__ooppaaqquuee(3X)*
+                      is_idlok                ccuurrss__ooppaaqquuee(3X)*
+                      is_immedok              ccuurrss__ooppaaqquuee(3X)*
+                      is_keypad               ccuurrss__ooppaaqquuee(3X)*
+                      is_leaveok              ccuurrss__ooppaaqquuee(3X)*
+                      is_linetouched          ccuurrss__ttoouucchh(3X)
+                      is_nodelay              ccuurrss__ooppaaqquuee(3X)*
+                      is_notimeout            ccuurrss__ooppaaqquuee(3X)*
+                      is_scrollok             ccuurrss__ooppaaqquuee(3X)*
+                      is_syncok               ccuurrss__ooppaaqquuee(3X)*
+                      is_term_resized         rreessiizzeetteerrmm(3X)*
+                      is_wintouched           ccuurrss__ttoouucchh(3X)
+                      isendwin                ccuurrss__iinniittssccrr(3X)
+                      key_defined             kkeeyy__ddeeffiinneedd(3X)*
+                      key_name                ccuurrss__uuttiill(3X)
+                      keybound                kkeeyybboouunndd(3X)*
+                      keyname                 ccuurrss__uuttiill(3X)
+                      keyok                   kkeeyyookk(3X)*
+                      keypad                  ccuurrss__iinnooppttss(3X)
+                      killchar                ccuurrss__tteerrmmaattttrrss(3X)
+                      killwchar               ccuurrss__tteerrmmaattttrrss(3X)
+                      leaveok                 ccuurrss__oouuttooppttss(3X)
+                      longname                ccuurrss__tteerrmmaattttrrss(3X)
+                      mcprint                 ccuurrss__pprriinntt(3X)*
+                      meta                    ccuurrss__iinnooppttss(3X)
+                      mouse_trafo             ccuurrss__mmoouussee(3X)*
+                      mouseinterval           ccuurrss__mmoouussee(3X)*
+                      mousemask               ccuurrss__mmoouussee(3X)*
+                      move                    ccuurrss__mmoovvee(3X)
+                      mvadd_wch               ccuurrss__aadddd__wwcchh(3X)
+                      mvadd_wchnstr           ccuurrss__aadddd__wwcchhssttrr(3X)
+                      mvadd_wchstr            ccuurrss__aadddd__wwcchhssttrr(3X)
+                      mvaddch                 ccuurrss__aaddddcchh(3X)
+                      mvaddchnstr             ccuurrss__aaddddcchhssttrr(3X)
+                      mvaddchstr              ccuurrss__aaddddcchhssttrr(3X)
+                      mvaddnstr               ccuurrss__aaddddssttrr(3X)
+                      mvaddnwstr              ccuurrss__aaddddwwssttrr(3X)
+                      mvaddstr                ccuurrss__aaddddssttrr(3X)
+                      mvaddwstr               ccuurrss__aaddddwwssttrr(3X)
+                      mvchgat                 ccuurrss__aattttrr(3X)
+                      mvcur                   ccuurrss__tteerrmmiinnffoo(3X)
+                      mvdelch                 ccuurrss__ddeellcchh(3X)
+                      mvderwin                ccuurrss__wwiinnddooww(3X)
+                      mvget_wch               ccuurrss__ggeett__wwcchh(3X)
+                      mvget_wstr              ccuurrss__ggeett__wwssttrr(3X)
+                      mvgetch                 ccuurrss__ggeettcchh(3X)
+                      mvgetn_wstr             ccuurrss__ggeett__wwssttrr(3X)
+                      mvgetnstr               ccuurrss__ggeettssttrr(3X)
+                      mvgetstr                ccuurrss__ggeettssttrr(3X)
+                      mvhline                 ccuurrss__bboorrddeerr(3X)
+                      mvhline_set             ccuurrss__bboorrddeerr__sseett(3X)
+                      mvin_wch                ccuurrss__iinn__wwcchh(3X)
+                      mvin_wchnstr            ccuurrss__iinn__wwcchhssttrr(3X)
+                      mvin_wchstr             ccuurrss__iinn__wwcchhssttrr(3X)
+                      mvinch                  ccuurrss__iinncchh(3X)
+                      mvinchnstr              ccuurrss__iinncchhssttrr(3X)
+                      mvinchstr               ccuurrss__iinncchhssttrr(3X)
+                      mvinnstr                ccuurrss__iinnssttrr(3X)
+                      mvinnwstr               ccuurrss__iinnwwssttrr(3X)
+                      mvins_nwstr             ccuurrss__iinnss__wwssttrr(3X)
+                      mvins_wch               ccuurrss__iinnss__wwcchh(3X)
+                      mvins_wstr              ccuurrss__iinnss__wwssttrr(3X)
+                      mvinsch                 ccuurrss__iinnsscchh(3X)
+                      mvinsnstr               ccuurrss__iinnssssttrr(3X)
+                      mvinsstr                ccuurrss__iinnssssttrr(3X)
+                      mvinstr                 ccuurrss__iinnssttrr(3X)
+                      mvinwstr                ccuurrss__iinnwwssttrr(3X)
+                      mvprintw                ccuurrss__pprriinnttww(3X)
+                      mvscanw                 ccuurrss__ssccaannww(3X)
+                      mvvline                 ccuurrss__bboorrddeerr(3X)
+                      mvvline_set             ccuurrss__bboorrddeerr__sseett(3X)
+                      mvwadd_wch              ccuurrss__aadddd__wwcchh(3X)
+                      mvwadd_wchnstr          ccuurrss__aadddd__wwcchhssttrr(3X)
+                      mvwadd_wchstr           ccuurrss__aadddd__wwcchhssttrr(3X)
+                      mvwaddch                ccuurrss__aaddddcchh(3X)
+                      mvwaddchnstr            ccuurrss__aaddddcchhssttrr(3X)
+                      mvwaddchstr             ccuurrss__aaddddcchhssttrr(3X)
+                      mvwaddnstr              ccuurrss__aaddddssttrr(3X)
+                      mvwaddnwstr             ccuurrss__aaddddwwssttrr(3X)
+                      mvwaddstr               ccuurrss__aaddddssttrr(3X)
+                      mvwaddwstr              ccuurrss__aaddddwwssttrr(3X)
+                      mvwchgat                ccuurrss__aattttrr(3X)
+                      mvwdelch                ccuurrss__ddeellcchh(3X)
+                      mvwget_wch              ccuurrss__ggeett__wwcchh(3X)
+                      mvwget_wstr             ccuurrss__ggeett__wwssttrr(3X)
+                      mvwgetch                ccuurrss__ggeettcchh(3X)
+                      mvwgetn_wstr            ccuurrss__ggeett__wwssttrr(3X)
+                      mvwgetnstr              ccuurrss__ggeettssttrr(3X)
+                      mvwgetstr               ccuurrss__ggeettssttrr(3X)
+                      mvwhline                ccuurrss__bboorrddeerr(3X)
+                      mvwhline_set            ccuurrss__bboorrddeerr__sseett(3X)
+                      mvwin                   ccuurrss__wwiinnddooww(3X)
+                      mvwin_wch               ccuurrss__iinn__wwcchh(3X)
+                      mvwin_wchnstr           ccuurrss__iinn__wwcchhssttrr(3X)
+                      mvwin_wchstr            ccuurrss__iinn__wwcchhssttrr(3X)
+                      mvwinch                 ccuurrss__iinncchh(3X)
+                      mvwinchnstr             ccuurrss__iinncchhssttrr(3X)
+                      mvwinchstr              ccuurrss__iinncchhssttrr(3X)
+                      mvwinnstr               ccuurrss__iinnssttrr(3X)
+                      mvwinnwstr              ccuurrss__iinnwwssttrr(3X)
+                      mvwins_nwstr            ccuurrss__iinnss__wwssttrr(3X)
+                      mvwins_wch              ccuurrss__iinnss__wwcchh(3X)
+                      mvwins_wstr             ccuurrss__iinnss__wwssttrr(3X)
+                      mvwinsch                ccuurrss__iinnsscchh(3X)
+                      mvwinsnstr              ccuurrss__iinnssssttrr(3X)
+                      mvwinsstr               ccuurrss__iinnssssttrr(3X)
+                      mvwinstr                ccuurrss__iinnssttrr(3X)
+                      mvwinwstr               ccuurrss__iinnwwssttrr(3X)
+                      mvwprintw               ccuurrss__pprriinnttww(3X)
+                      mvwscanw                ccuurrss__ssccaannww(3X)
+                      mvwvline                ccuurrss__bboorrddeerr(3X)
+                      mvwvline_set            ccuurrss__bboorrddeerr__sseett(3X)
+                      napms                   ccuurrss__kkeerrnneell(3X)
+                      newpad                  ccuurrss__ppaadd(3X)
+                      newterm                 ccuurrss__iinniittssccrr(3X)
+                      newwin                  ccuurrss__wwiinnddooww(3X)
+                      nl                      ccuurrss__oouuttooppttss(3X)
+                      nocbreak                ccuurrss__iinnooppttss(3X)
+                      nodelay                 ccuurrss__iinnooppttss(3X)
+                      noecho                  ccuurrss__iinnooppttss(3X)
+                      nofilter                ccuurrss__uuttiill(3X)*
+                      nonl                    ccuurrss__oouuttooppttss(3X)
+                      noqiflush               ccuurrss__iinnooppttss(3X)
+                      noraw                   ccuurrss__iinnooppttss(3X)
+                      notimeout               ccuurrss__iinnooppttss(3X)
+                      overlay                 ccuurrss__oovveerrllaayy(3X)
+                      overwrite               ccuurrss__oovveerrllaayy(3X)
+                      pair_content            ccuurrss__ccoolloorr(3X)
+                      pechochar               ccuurrss__ppaadd(3X)
+                      pnoutrefresh            ccuurrss__ppaadd(3X)
+                      prefresh                ccuurrss__ppaadd(3X)
+                      printw                  ccuurrss__pprriinnttww(3X)
+                      putp                    ccuurrss__tteerrmmiinnffoo(3X)
+                      putwin                  ccuurrss__uuttiill(3X)
+                      qiflush                 ccuurrss__iinnooppttss(3X)
+                      raw                     ccuurrss__iinnooppttss(3X)
+                      redrawwin               ccuurrss__rreeffrreesshh(3X)
+                      refresh                 ccuurrss__rreeffrreesshh(3X)
+                      reset_prog_mode         ccuurrss__kkeerrnneell(3X)
+                      reset_shell_mode        ccuurrss__kkeerrnneell(3X)
+                      resetty                 ccuurrss__kkeerrnneell(3X)
+                      resizeterm              rreessiizzeetteerrmm(3X)*
+                      restartterm             ccuurrss__tteerrmmiinnffoo(3X)
+                      ripoffline              ccuurrss__kkeerrnneell(3X)
+                      savetty                 ccuurrss__kkeerrnneell(3X)
+                      scanw                   ccuurrss__ssccaannww(3X)
+                      scr_dump                ccuurrss__ssccrr__dduummpp(3X)
+                      scr_init                ccuurrss__ssccrr__dduummpp(3X)
+                      scr_restore             ccuurrss__ssccrr__dduummpp(3X)
+                      scr_set                 ccuurrss__ssccrr__dduummpp(3X)
+                      scrl                    ccuurrss__ssccrroollll(3X)
+                      scroll                  ccuurrss__ssccrroollll(3X)
+                      scrollok                ccuurrss__oouuttooppttss(3X)
+                      set_curterm             ccuurrss__tteerrmmiinnffoo(3X)
+                      set_term                ccuurrss__iinniittssccrr(3X)
+                      setcchar                ccuurrss__ggeettcccchhaarr(3X)
+                      setscrreg               ccuurrss__oouuttooppttss(3X)
+                      setsyx                  ccuurrss__kkeerrnneell(3X)
+                      setterm                 ccuurrss__tteerrmmiinnffoo(3X)
+                      setupterm               ccuurrss__tteerrmmiinnffoo(3X)
+                      slk_attr                ccuurrss__ssllkk(3X)*
+                      slk_attr_off            ccuurrss__ssllkk(3X)
+                      slk_attr_on             ccuurrss__ssllkk(3X)
+                      slk_attr_set            ccuurrss__ssllkk(3X)
+                      slk_attroff             ccuurrss__ssllkk(3X)
+                      slk_attron              ccuurrss__ssllkk(3X)
+                      slk_attrset             ccuurrss__ssllkk(3X)
+                      slk_clear               ccuurrss__ssllkk(3X)
+                      slk_color               ccuurrss__ssllkk(3X)
+                      slk_init                ccuurrss__ssllkk(3X)
+                      slk_label               ccuurrss__ssllkk(3X)
+                      slk_noutrefresh         ccuurrss__ssllkk(3X)
+                      slk_refresh             ccuurrss__ssllkk(3X)
+                      slk_restore             ccuurrss__ssllkk(3X)
+                      slk_set                 ccuurrss__ssllkk(3X)
+                      slk_touch               ccuurrss__ssllkk(3X)
+                      standend                ccuurrss__aattttrr(3X)
+                      standout                ccuurrss__aattttrr(3X)
+                      start_color             ccuurrss__ccoolloorr(3X)
+                      subpad                  ccuurrss__ppaadd(3X)
+                      subwin                  ccuurrss__wwiinnddooww(3X)
+                      syncok                  ccuurrss__wwiinnddooww(3X)
+                      term_attrs              ccuurrss__tteerrmmaattttrrss(3X)
+                      termattrs               ccuurrss__tteerrmmaattttrrss(3X)
+                      termname                ccuurrss__tteerrmmaattttrrss(3X)
+                      tgetent                 ccuurrss__tteerrmmccaapp(3X)
+                      tgetflag                ccuurrss__tteerrmmccaapp(3X)
+                      tgetnum                 ccuurrss__tteerrmmccaapp(3X)
+                      tgetstr                 ccuurrss__tteerrmmccaapp(3X)
+                      tgoto                   ccuurrss__tteerrmmccaapp(3X)
+                      tigetflag               ccuurrss__tteerrmmiinnffoo(3X)
+                      tigetnum                ccuurrss__tteerrmmiinnffoo(3X)
+                      tigetstr                ccuurrss__tteerrmmiinnffoo(3X)
+                      timeout                 ccuurrss__iinnooppttss(3X)
+                      touchline               ccuurrss__ttoouucchh(3X)
+                      touchwin                ccuurrss__ttoouucchh(3X)
+                      tparm                   ccuurrss__tteerrmmiinnffoo(3X)
+                      tputs                   ccuurrss__tteerrmmccaapp(3X)
+                      tputs                   ccuurrss__tteerrmmiinnffoo(3X)
+                      trace                   ccuurrss__ttrraaccee(3X)*
+                      typeahead               ccuurrss__iinnooppttss(3X)
+                      unctrl                  ccuurrss__uuttiill(3X)
+                      unget_wch               ccuurrss__ggeett__wwcchh(3X)
+                      ungetch                 ccuurrss__ggeettcchh(3X)
+                      ungetmouse              ccuurrss__mmoouussee(3X)*
+                      untouchwin              ccuurrss__ttoouucchh(3X)
+                      use_default_colors      ddeeffaauulltt__ccoolloorrss(3X)*
+                      use_env                 ccuurrss__uuttiill(3X)
+                      use_extended_names      ccuurrss__eexxtteenndd(3X)*
+                      use_legacy_coding       lleeggaaccyy__ccooddiinngg(3X)*
+                      vid_attr                ccuurrss__tteerrmmiinnffoo(3X)
+                      vid_puts                ccuurrss__tteerrmmiinnffoo(3X)
+                      vidattr                 ccuurrss__tteerrmmiinnffoo(3X)
+                      vidputs                 ccuurrss__tteerrmmiinnffoo(3X)
+                      vline                   ccuurrss__bboorrddeerr(3X)
+                      vline_set               ccuurrss__bboorrddeerr__sseett(3X)
+                      vw_printw               ccuurrss__pprriinnttww(3X)
+                      vw_scanw                ccuurrss__ssccaannww(3X)
+                      vwprintw                ccuurrss__pprriinnttww(3X)
+                      vwscanw                 ccuurrss__ssccaannww(3X)
+                      wadd_wch                ccuurrss__aadddd__wwcchh(3X)
+                      wadd_wchnstr            ccuurrss__aadddd__wwcchhssttrr(3X)
+                      wadd_wchstr             ccuurrss__aadddd__wwcchhssttrr(3X)
+                      waddch                  ccuurrss__aaddddcchh(3X)
+                      waddchnstr              ccuurrss__aaddddcchhssttrr(3X)
+                      waddchstr               ccuurrss__aaddddcchhssttrr(3X)
+                      waddnstr                ccuurrss__aaddddssttrr(3X)
+                      waddnwstr               ccuurrss__aaddddwwssttrr(3X)
+                      waddstr                 ccuurrss__aaddddssttrr(3X)
+                      waddwstr                ccuurrss__aaddddwwssttrr(3X)
+                      wattr_get               ccuurrss__aattttrr(3X)
+                      wattr_off               ccuurrss__aattttrr(3X)
+                      wattr_on                ccuurrss__aattttrr(3X)
+                      wattr_set               ccuurrss__aattttrr(3X)
+                      wattroff                ccuurrss__aattttrr(3X)
+                      wattron                 ccuurrss__aattttrr(3X)
+                      wattrset                ccuurrss__aattttrr(3X)
+                      wbkgd                   ccuurrss__bbkkggdd(3X)
+                      wbkgdset                ccuurrss__bbkkggdd(3X)
+                      wbkgrnd                 ccuurrss__bbkkggrrnndd(3X)
+                      wbkgrndset              ccuurrss__bbkkggrrnndd(3X)
+                      wborder                 ccuurrss__bboorrddeerr(3X)
+                      wborder_set             ccuurrss__bboorrddeerr__sseett(3X)
+                      wchgat                  ccuurrss__aattttrr(3X)
+                      wclear                  ccuurrss__cclleeaarr(3X)
+                      wclrtobot               ccuurrss__cclleeaarr(3X)
+                      wclrtoeol               ccuurrss__cclleeaarr(3X)
+                      wcolor_set              ccuurrss__aattttrr(3X)
+                      wcursyncup              ccuurrss__wwiinnddooww(3X)
+                      wdelch                  ccuurrss__ddeellcchh(3X)
+                      wdeleteln               ccuurrss__ddeelleetteellnn(3X)
+                      wecho_wchar             ccuurrss__aadddd__wwcchh(3X)
+                      wechochar               ccuurrss__aaddddcchh(3X)
+                      wenclose                ccuurrss__mmoouussee(3X)*
+                      werase                  ccuurrss__cclleeaarr(3X)
+                      wget_wch                ccuurrss__ggeett__wwcchh(3X)
+                      wget_wstr               ccuurrss__ggeett__wwssttrr(3X)
+                      wgetbkgrnd              ccuurrss__bbkkggrrnndd(3X)
+                      wgetch                  ccuurrss__ggeettcchh(3X)
+                      wgetn_wstr              ccuurrss__ggeett__wwssttrr(3X)
+                      wgetnstr                ccuurrss__ggeettssttrr(3X)
+                      wgetstr                 ccuurrss__ggeettssttrr(3X)
+                      whline                  ccuurrss__bboorrddeerr(3X)
+                      whline_set              ccuurrss__bboorrddeerr__sseett(3X)
+                      win_wch                 ccuurrss__iinn__wwcchh(3X)
+                      win_wchnstr             ccuurrss__iinn__wwcchhssttrr(3X)
+                      win_wchstr              ccuurrss__iinn__wwcchhssttrr(3X)
+                      winch                   ccuurrss__iinncchh(3X)
+                      winchnstr               ccuurrss__iinncchhssttrr(3X)
+                      winchstr                ccuurrss__iinncchhssttrr(3X)
+                      winnstr                 ccuurrss__iinnssttrr(3X)
+                      winnwstr                ccuurrss__iinnwwssttrr(3X)
+                      wins_nwstr              ccuurrss__iinnss__wwssttrr(3X)
+                      wins_wch                ccuurrss__iinnss__wwcchh(3X)
+                      wins_wstr               ccuurrss__iinnss__wwssttrr(3X)
+                      winsch                  ccuurrss__iinnsscchh(3X)
+                      winsdelln               ccuurrss__ddeelleetteellnn(3X)
+                      winsertln               ccuurrss__ddeelleetteellnn(3X)
+                      winsnstr                ccuurrss__iinnssssttrr(3X)
+                      winsstr                 ccuurrss__iinnssssttrr(3X)
+                      winstr                  ccuurrss__iinnssttrr(3X)
+                      winwstr                 ccuurrss__iinnwwssttrr(3X)
+                      wmouse_trafo            ccuurrss__mmoouussee(3X)*
+                      wmove                   ccuurrss__mmoovvee(3X)
+                      wnoutrefresh            ccuurrss__rreeffrreesshh(3X)
+                      wprintw                 ccuurrss__pprriinnttww(3X)
+                      wredrawln               ccuurrss__rreeffrreesshh(3X)
+                      wrefresh                ccuurrss__rreeffrreesshh(3X)
+                      wresize                 wwrreessiizzee(3X)*
+                      wscanw                  ccuurrss__ssccaannww(3X)
+                      wscrl                   ccuurrss__ssccrroollll(3X)
+                      wsetscrreg              ccuurrss__oouuttooppttss(3X)
+                      wstandend               ccuurrss__aattttrr(3X)
+                      wstandout               ccuurrss__aattttrr(3X)
+                      wsyncdown               ccuurrss__wwiinnddooww(3X)
+                      wsyncup                 ccuurrss__wwiinnddooww(3X)
+                      wtimeout                ccuurrss__iinnooppttss(3X)
+                      wtouchln                ccuurrss__ttoouucchh(3X)
+                      wunctrl                 ccuurrss__uuttiill(3X)
+                      wvline                  ccuurrss__bboorrddeerr(3X)
+                      wvline_set              ccuurrss__bboorrddeerr__sseett(3X)
+
+RREETTUURRNN VVAALLUUEE
+       Routines that return an integer return EERRRR upon failure and an integer
+       value other than EERRRR upon successful completion, unless otherwise noted
+       in the routine descriptions.
+
+       All macros return the value of the ww version, except sseettssccrrrreegg,
+       wwsseettssccrrrreegg, ggeettyyxx, ggeettbbeeggyyxx, and ggeettmmaaxxyyxx.  The return values of
+       sseettssccrrrreegg, wwsseettssccrrrreegg, ggeettyyxx, ggeettbbeeggyyxx, and ggeettmmaaxxyyxx are undefined (i.e.,
+       these should not be used as the right-hand side of assignment
+       statements).
+
+       Routines that return pointers return NNUULLLL on error.
+
+EENNVVIIRROONNMMEENNTT
+       The following environment symbols are useful for customizing the runtime
+       behavior of the nnccuurrsseess library.  The most important ones have been
+       already discussed in detail.
+
+       BAUDRATE
+            The debugging library checks this environment symbol when the
+            application has redirected output to a file.  The symbol's numeric
+            value is used for the baudrate.  If no value is found, nnccuurrsseess uses
+            9600.  This allows testers to construct repeatable test-cases that
+            take into account costs that depend on baudrate.
+
+       CC   When set, change occurrences of the command_character (i.e., the
+            ccmmddcchh capability) of the loaded terminfo entries to the value of
+            this symbol.  Very few terminfo entries provide this feature.
+
+       COLUMNS
+            Specify the width of the screen in characters.  Applications running
+            in a windowing environment usually are able to obtain the width of
+            the window in which they are executing.  If neither the CCOOLLUUMMNNSS
+            value nor the terminal's screen size is available, nnccuurrsseess uses the
+            size which may be specified in the terminfo database (i.e., the ccoollss
+            capability).
+
+            It is important that your application use a correct size for the
+            screen.  This is not always possible because your application may be
+            running on a host which does not honor NAWS (Negotiations About
+            Window Size), or because you are temporarily running as another
+            user.  However, setting CCOOLLUUMMNNSS and/or LLIINNEESS overrides the library's
+            use of the screen size obtained from the operating system.
+
+            Either CCOOLLUUMMNNSS or LLIINNEESS symbols may be specified independently.
+            This is mainly useful to circumvent legacy misfeatures of terminal
+            descriptions, e.g., xterm which commonly specifies a 65 line screen.
+            For best results, lliinneess and ccoollss should not be specified in a
+            terminal description for terminals which are run as emulations.
+
+            Use the uussee__eennvv function to disable all use of external environment
+            (including system calls) to determine the screen size.
+
+       ESCDELAY
+            Specifies the total time, in milliseconds, for which ncurses will
+            await a character sequence, e.g., a function key.  The default
+            value, 1000 milliseconds, is enough for most uses.  However, it is
+            made a variable to accommodate unusual applications.
+
+            The most common instance where you may wish to change this value is
+            to work with slow hosts, e.g., running on a network.  If the host
+            cannot read characters rapidly enough, it will have the same effect
+            as if the terminal did not send characters rapidly enough.  The
+            library will still see a timeout.
+
+            Note that xterm mouse events are built up from character sequences
+            received from the xterm.  If your application makes heavy use of
+            multiple-clicking, you may wish to lengthen this default value
+            because the timeout applies to the composed multi-click event as
+            well as the individual clicks.
+
+            In addition to the environment variable, this implementation
+            provides a global variable with the same name.  Portable
+            applications should not rely upon the presence of ESCDELAY in either
+            form, but setting the environment variable rather than the global
+            variable does not create problems when compiling an application.
+
+       HOME Tells nnccuurrsseess where your home directory is.  That is where it may
+            read and write auxiliary terminal descriptions:
+
+            $HOME/.termcap
+            $HOME/.terminfo
+
+       LINES
+            Like COLUMNS, specify the height of the screen in characters.  See
+            COLUMNS for a detailed description.
+
+       MOUSE_BUTTONS_123
+            This applies only to the OS/2 EMX port.  It specifies the order of
+            buttons on the mouse.  OS/2 numbers a 3-button mouse inconsistently
+            from other platforms:
+
+            1 = left
+            2 = right
+            3 = middle.
+
+            This symbol lets you customize the mouse.  The symbol must be three
+            numeric digits 1-3 in any order, e.g., 123 or 321.  If it is not
+            specified, nnccuurrsseess uses 132.
+
+       NCURSES_ASSUMED_COLORS
+            Override the compiled-in assumption that the terminal's default
+            colors are white-on-black (see ddeeffaauulltt__ccoolloorrss(3X)).  You may set the
+            foreground and background color values with this environment
+            variable by proving a 2-element list: foreground,background.  For
+            example, to tell ncurses to not assume anything about the colors,
+            set this to "-1,-1".  To make it green-on-black, set it to "2,0".
+            Any positive value from zero to the terminfo mmaaxx__ccoolloorrss value is
+            allowed.
+
+       NCURSES_GPM_TERMS
+            This applies only to ncurses configured to use the GPM interface.
+
+            If present, the environment variable is a list of one or more
+            terminal names against which the TERM environment variable is
+            matched.  Setting it to an empty value disables the GPM interface;
+            using the built-in support for xterm, etc.
+
+            If the environment variable is absent, ncurses will attempt to open
+            GPM if TERM contains "linux".
+
+       NCURSES_NO_HARD_TABS
+            NNccuurrsseess may use tabs as part of the cursor movement optimization.
+            In some cases, your terminal driver may not handle these properly.
+            Set this environment variable to disable the feature.  You can also
+            adjust your ssttttyy settings to avoid the problem.
+
+       NCURSES_NO_MAGIC_COOKIES
+            Some terminals use a magic-cookie feature which requires special
+            handling to make highlighting and other video attributes display
+            properly.  You can suppress the highlighting entirely for these
+            terminals by setting this environment variable.
+
+       NCURSES_NO_PADDING
+            Most of the terminal descriptions in the terminfo database are
+            written for real "hardware" terminals.  Many people use terminal
+            emulators which run in a windowing environment and use curses-based
+            applications.  Terminal emulators can duplicate all of the important
+            aspects of a hardware terminal, but they do not have the same
+            limitations.  The chief limitation of a hardware terminal from the
+            standpoint of your application is the management of dataflow, i.e.,
+            timing.  Unless a hardware terminal is interfaced into a terminal
+            concentrator (which does flow control), it (or your application)
+            must manage dataflow, preventing overruns.  The cheapest solution
+            (no hardware cost) is for your program to do this by pausing after
+            operations that the terminal does slowly, such as clearing the
+            display.
+
+            As a result, many terminal descriptions (including the vt100) have
+            delay times embedded.  You may wish to use these descriptions, but
+            not want to pay the performance penalty.
+
+            Set the NCURSES_NO_PADDING symbol to disable all but mandatory
+            padding.  Mandatory padding is used as a part of special control
+            sequences such as _f_l_a_s_h.
+
+       NCURSES_NO_SETBUF
+            Normally nnccuurrsseess enables buffered output during terminal
+            initialization.  This is done (as in SVr4 curses) for performance
+            reasons.  For testing purposes, both of nnccuurrsseess and certain
+            applications, this feature is made optional.  Setting the
+            NCURSES_NO_SETBUF variable disables output buffering, leaving the
+            output in the original (usually line buffered) mode.
+
+       NCURSES_NO_UTF8_ACS
+            During initialization, the nnccuurrsseess library checks for special cases
+            where VT100 line-drawing (and the corresponding alternate character
+            set capabilities) described in the terminfo are known to be missing.
+            Specifically, when running in a UTF-8 locale, the Linux console
+            emulator and the GNU screen program ignore these.  Ncurses checks
+            the TERM environment variable for these.  For other special cases,
+            you should set this environment variable.  Doing this tells ncurses
+            to use Unicode values which correspond to the VT100 line-drawing
+            glyphs.  That works for the special cases cited, and is likely to
+            work for terminal emulators.
+
+            When setting this variable, you should set it to a nonzero value.
+            Setting it to zero (or to a nonnumber) disables the special check
+            for Linux and screen.
+
+       NCURSES_TRACE
+            During initialization, the nnccuurrsseess debugging library checks the
+            NCURSES_TRACE symbol.  If it is defined, to a numeric value, nnccuurrsseess
+            calls the ttrraaccee function, using that value as the argument.
+
+            The argument values, which are defined in ccuurrsseess..hh, provide several
+            types of information.  When running with traces enabled, your
+            application will write the file ttrraaccee to the current directory.
+
+       TERM Denotes your terminal type.  Each terminal type is distinct, though
+            many are similar.
+
+       TERMCAP
+            If the nnccuurrsseess library has been configured with _t_e_r_m_c_a_p support,
+            nnccuurrsseess will check for a terminal's description in termcap form if
+            it is not available in the terminfo database.
+
+            The TERMCAP symbol contains either a terminal description (with
+            newlines stripped out), or a file name telling where the information
+            denoted by the TERM symbol exists.  In either case, setting it
+            directs nnccuurrsseess to ignore the usual place for this information,
+            e.g., /etc/termcap.
+
+       TERMINFO
+            Overrides the directory in which nnccuurrsseess searches for your terminal
+            description.  This is the simplest, but not the only way to change
+            the list of directories.  The complete list of directories in order
+            follows:
+
+            -  the last directory to which nnccuurrsseess wrote, if any, is searched
+               first
+
+            -  the directory specified by the TERMINFO symbol
+
+            -  $HOME/.terminfo
+
+            -  directories listed in the TERMINFO_DIRS symbol
+
+            -  one or more directories whose names are configured and compiled
+               into the ncurses library, e.g., /usr/share/terminfo
+
+       TERMINFO_DIRS
+            Specifies a list of directories to search for terminal descriptions.
+            The list is separated by colons (i.e., ":") on Unix, semicolons on
+            OS/2 EMX.  All of the terminal descriptions are in terminfo form,
+            which makes a subdirectory named for the first letter of the
+            terminal names therein.
+
+       TERMPATH
+            If TERMCAP does not hold a file name then nnccuurrsseess checks the
+            TERMPATH symbol.  This is a list of filenames separated by spaces or
+            colons (i.e., ":") on Unix, semicolons on OS/2 EMX.  If the TERMPATH
+            symbol is not set, nnccuurrsseess looks in the files /etc/termcap,
+            /usr/share/misc/termcap and $HOME/.termcap, in that order.
+
+       The library may be configured to disregard the following variables when
+       the current user is the superuser (root), or if the application uses
+       setuid or setgid permissions: $TERMINFO, $TERMINFO_DIRS, $TERMPATH, as
+       well as $HOME.
+
+AALLTTEERRNNAATTEE CCOONNFFIIGGUURRAATTIIOONNSS
+       Several different configurations are possible, depending on the configure
+       script options used when building nnccuurrsseess.  There are a few main options
+       whose effects are visible to the applications developer using nnccuurrsseess:
+
+       --disable-overwrite
+            The standard include for nnccuurrsseess is as noted in SSYYNNOOPPSSIISS:
+
+            ##iinncclluuddee <<ccuurrsseess..hh>>
+
+            This option is used to avoid filename conflicts when nnccuurrsseess is not
+            the main implementation of curses of the computer.  If nnccuurrsseess is
+            installed disabling overwrite, it puts its headers in a
+            subdirectory, e.g.,
+
+            ##iinncclluuddee <<nnccuurrsseess//ccuurrsseess..hh>>
+
+            It also omits a symbolic link which would allow you to use --llccuurrsseess
+            to build executables.
+
+       --enable-widec
+            The configure script renames the library and (if the ----ddiissaabbllee--
+            oovveerrwwrriittee option is used) puts the header files in a different
+            subdirectory.  All of the library names have a "w" appended to them,
+            i.e., instead of
+
+            --llnnccuurrsseess
+
+            you link with
+
+            --llnnccuurrsseessww
+
+            You must also define __XXOOPPEENN__SSOOUURRCCEE__EEXXTTEENNDDEEDD when compiling for the
+            wide-character library to use the extended (wide-character)
+            functions.  The ccuurrsseess..hh file which is installed for the wide-
+            character library is designed to be compatible with the normal
+            library's header.  Only the size of the WWIINNDDOOWW structure differs,
+            and very few applications require more than a pointer to WWIINNDDOOWWs.
+            If the headers are installed allowing overwrite, the wide-character
+            library's headers should be installed last, to allow applications to
+            be built using either library from the same set of headers.
+
+       --with-shared
+
+       --with-normal
+
+       --with-debug
+
+       --with-profile
+            The shared and normal (static) library names differ by their
+            suffixes, e.g., lliibbnnccuurrsseess..ssoo and lliibbnnccuurrsseess..aa.  The debug and
+            profiling libraries add a "_g" and a "_p" to the root names
+            respectively, e.g., lliibbnnccuurrsseess__gg..aa and lliibbnnccuurrsseess__pp..aa.
+
+       --with-trace
+            The ttrraaccee function normally resides in the debug library, but it is
+            sometimes useful to configure this in the shared library.  Configure
+            scripts should check for the function's existence rather than
+            assuming it is always in the debug library.
+
+FFIILLEESS
+       /usr/share/tabset
+            directory containing initialization files for the terminal
+            capability database /usr/share/terminfo terminal capability database
+
+SSEEEE AALLSSOO
+       tteerrmmiinnffoo(5) and related pages whose names begin "curs_" for detailed
+       routine descriptions.
+
+EEXXTTEENNSSIIOONNSS
+       The nnccuurrsseess library can be compiled with an option (--DDUUSSEE__GGEETTCCAAPP) that
+       falls back to the old-style /etc/termcap file if the terminal setup code
+       cannot find a terminfo entry corresponding to TTEERRMM.  Use of this feature
+       is not recommended, as it essentially includes an entire termcap compiler
+       in the nnccuurrsseess startup code, at significant cost in core and startup
+       cycles.
+
+       The nnccuurrsseess library includes facilities for capturing mouse events on
+       certain terminals (including xterm).  See the ccuurrss__mmoouussee(3X) manual page
+       for details.
+
+       The nnccuurrsseess library includes facilities for responding to window resizing
+       events, e.g., when running in an xterm.  See the rreessiizzeetteerrmm(3X) and
+       wwrreessiizzee(3X) manual pages for details.  In addition, the library may be
+       configured with a SIGWINCH handler.
+
+       The nnccuurrsseess library extends the fixed set of function key capabilities of
+       terminals by allowing the application designer to define additional key
+       sequences at runtime.  See the ddeeffiinnee__kkeeyy(3X) kkeeyy__ddeeffiinneedd(3X), and
+       kkeeyyookk(3X) manual pages for details.
+
+       The nnccuurrsseess library can exploit the capabilities of terminals which
+       implement the ISO-6429 SGR 39 and SGR 49 controls, which allow an
+       application to reset the terminal to its original foreground and
+       background colors.  From the users' perspective, the application is able
+       to draw colored text on a background whose color is set independently,
+       providing better control over color contrasts.  See the
+       ddeeffaauulltt__ccoolloorrss(3X) manual page for details.
+
+       The nnccuurrsseess library includes a function for directing application output
+       to a printer attached to the terminal device.  See the ccuurrss__pprriinntt(3X)
+       manual page for details.
+
+PPOORRTTAABBIILLIITTYY
+       The nnccuurrsseess library is intended to be BASE-level conformant with XSI
+       Curses.  The EXTENDED XSI Curses functionality (including color support)
+       is supported.
+
+       A small number of local differences (that is, individual differences
+       between the XSI Curses and nnccuurrsseess calls) are described in PPOORRTTAABBIILLIITTYY
+       sections of the library man pages.
+
+       This implementation also contains several extensions:
+
+            The routine hhaass__kkeeyy is not part of XPG4, nor is it present in SVr4.
+            See the ccuurrss__ggeettcchh(3X) manual page for details.
+
+            The routine ssllkk__aattttrr is not part of XPG4, nor is it present in SVr4.
+            See the ccuurrss__ssllkk(3X) manual page for details.
+
+            The routines ggeettmmoouussee, mmoouusseemmaasskk, uunnggeettmmoouussee, mmoouusseeiinntteerrvvaall, and
+            wweenncclloossee relating to mouse interfacing are not part of XPG4, nor are
+            they present in SVr4.  See the ccuurrss__mmoouussee(3X) manual page for
+            details.
+
+            The routine mmccpprriinntt was not present in any previous curses
+            implementation.  See the ccuurrss__pprriinntt(3X) manual page for details.
+
+            The routine wwrreessiizzee is not part of XPG4, nor is it present in SVr4.
+            See the wwrreessiizzee(3X) manual page for details.
+
+            The WINDOW structure's internal details can be hidden from
+            application programs.  See ccuurrss__ooppaaqquuee(3X) for the discussion of
+            iiss__ssccrroollllookk, etc.
+
+       In historic curses versions, delays embedded in the capabilities ccrr, iinndd,
+       ccuubb11, ffff and ttaabb activated corresponding delay bits in the UNIX tty
+       driver.  In this implementation, all padding is done by sending NUL
+       bytes.  This method is slightly more expensive, but narrows the interface
+       to the UNIX kernel significantly and increases the package's portability
+       correspondingly.
+
+NNOOTTEESS
+       The header file <<ccuurrsseess..hh>> automatically includes the header files
+       <<ssttddiioo..hh>> and <<uunnccttrrll..hh>>.
+
+       If standard output from a nnccuurrsseess program is re-directed to something
+       which is not a tty, screen updates will be directed to standard error.
+       This was an undocumented feature of AT&T System V Release 3 curses.
+
+AAUUTTHHOORRSS
+       Zeyd M. Ben-Halim, Eric S. Raymond, Thomas E. Dickey.  Based on pcurses
+       by Pavel Curtis.
+
+
+
+                                                                     ncurses(3X)

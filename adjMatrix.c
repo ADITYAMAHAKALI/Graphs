@@ -1,18 +1,21 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<time.h>
+#include<stdbool.h>
 
 typedef struct AdjacencyMatrix{
-    int *mat;
+    int *mat; 
     int vertices;
     int edges;
-
 }adjMatrix; 
+
+
 void initializeAdjMatrix(adjMatrix *G, int v){
     G->vertices = v; 
     G->mat = (int*)malloc(sizeof(int)*v*v);
     G->edges = 0;
 }
+
 void inputGraph(adjMatrix *G){
     int v = G->vertices;
      
@@ -32,16 +35,18 @@ void inputGraph(adjMatrix *G){
         }
     } 
 }
-void generateGraph(adjMatrix *G,float prob){
+
+void generateGraph(adjMatrix *G,float prob,bool selfLoop){
     int v = G->vertices;
     int r;
     for(int i=0;i<v; i++){
-       
         for(int j=0;j<v;j++){
             r = rand()%10;
             if(r<=prob*10){
-                *(G->mat+i*v+j)=1;
-                G->edges++;
+                if(selfLoop || i!=j){ 
+                    *(G->mat+i*v+j)=1;
+                    G->edges++;
+                }
             }else{
                  *(G->mat+i*v+j)=0;
             }
@@ -66,15 +71,22 @@ void outputGraph(adjMatrix *G){
         }
         printf("\n\n");
     } 
-    printf("The graph has %d verices and %d edges",G->vertices,G->edges);
+    printf("The graph has %d vertices and %d edges",G->vertices,G->edges);
 }
+
 int main(){
     // the dimension of this matrix will depend on number of vertices 
     srand(time(0));
-    adjMatrix G;
-    
-    initializeAdjMatrix(&G,4);
-    generateGraph(&G,0.4);
+    bool selfLoop = false;
+    adjMatrix G; // directedGraph
+    int n;
+    float p;
+    printf("\nHow many vertices do you want : ");
+    scanf("%d",&n);
+    printf("\nProbabiltiy(between 0 and 1) of edge between any two vertices : ");
+    scanf("%f",&p);
+    initializeAdjMatrix(&G,n);
+    generateGraph(&G,p,selfLoop);
     outputGraph(&G);
     printf("\n");
 }

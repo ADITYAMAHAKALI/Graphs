@@ -20,20 +20,23 @@ void bfs(wudgraph *G,int x){
     queue q;
     int y;
     initializeQueue(&q,G->vertices);
-    int i=0;
-    if(G->list[i].head !=NULL){
-        i++;
-    }
-    enqueue(&q,i); 
-    visited[i] =1 ;
+   // int i=0;
+    // if(G->list[i].head !=NULL){
+    //     i++;
+    // }
+    enqueue(&q,0); 
+    visited[0] =1 ;
+    // printf("\n%d", i);
     while(!empty(&q)){
+        printf("\nCurrent Status of queueue \n");
+        printQueue(&q);
         y = peek(&q);
         if(y == x){
-            printf("\n%d is found",x);
+            printf("\n%d is found at front of queue",x);
             break;
         }
         appendNeighbours(&q,G->list[y],visited);
-        printf("%d ",y);
+        //printf("%d ",y);
         dequeue(&q);
     }
     if(empty(&q)){
@@ -53,7 +56,10 @@ int main(){
     printEdges(edges,n);
     createGraph(&G,edges,n);
     printGraph(&G);
-    bfs(&G,6);
+    int g;
+    printf("\nEnter your goal node");
+    scanf("%d",&g);
+    bfs(&G,g);
     printf("\n");
 }
 

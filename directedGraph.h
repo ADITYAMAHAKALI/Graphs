@@ -1,6 +1,7 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<time.h>
+#include<stdbool.h>
 #include"linkedList.h"
 
 
@@ -46,11 +47,11 @@ void printGraph(dgraph *G){
     }
 }
 
-void generateGraph(dgraph *G, float prob,int isSimple){ // 0 for self-loops, 1 for no-self loops
+void generateGraph(dgraph *G, float prob,bool isSimple){ // 0 for self-loops, 1 for no-self loops
     int r ; 
     for(int i =0; i<G->vertices;i++){
         for(int j=0;j<G->vertices;j++){
-            if(i==j && isSimple){
+            if(i==j || isSimple){
                 continue;
             }
             r = rand()%10;

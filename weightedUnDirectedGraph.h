@@ -30,7 +30,6 @@ void printList(linkedList ll,int i){
     printf("NULL");
 }
 
-
 typedef struct Edge{
     int src,dest,weight;
 }edge;
@@ -81,6 +80,27 @@ typedef struct weightedUndirectedGraph{
     int edges;
 }wudgraph;
 
+ int removeParallelEdges(edge *edges,int n){
+     int i,j,k;
+  for ( i = 0; i < n; i ++)  
+    {  
+        for (  j = i + 1;j < n; j++)  
+        {  
+            if ( edges[i].src == edges[j].src && edges[i].dest == edges[j].dest)  
+            {  
+                for ( k = j; k < n - 1; k++)  
+                {  
+                    edges[k].src = edges[k + 1].src;
+                    edges[k].dest = edges[k+1].dest; 
+                    edges[k].weight = edges[k+1].weight; 
+                }  
+                n--; 
+                j--;
+            }        
+        }  
+    }  
+    return n;
+ }
 
 void insertInList(linkedList *ll,int d,int w){
     node *temp,*src,*dest;

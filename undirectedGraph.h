@@ -1,6 +1,7 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<time.h>
+#include<stdbool.h>
 #include"linkedList.h"
 
 void insertInList(linkedList *ll,int s,int d){
@@ -49,14 +50,16 @@ void printGraph(udgraph *G){
     }
 }
 
-void generateGraph(udgraph *G, float prob,int isSimple){ // 0 for self-loops, 1 for no-self loops
+void generateGraph(udgraph *G, float prob,bool isSimple){ // 0 for self-loops, 1 for no-self loops
     int r ; 
     for(int i =0; i<G->vertices;i++){
-        for(int j=i+isSimple;j<G->vertices;j++){
-            r =rand()%10;
-            if(r<=prob*10){
+        for(int j=i;j<G->vertices;j++){
+            if(i==j || isSimple){
+                continue;
+            }
+            r = rand()%10;
+            if(r <= prob *10){
                 addEdge(G,i,j);
-                
             }
         }
     }

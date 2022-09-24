@@ -1,70 +1,79 @@
-#include <stdio.h>
-#include <stdlib.h>
+#include<stdio.h>
+#include<stdlib.h>
+#include<time.h>
+#include<stdbool.h>
+#include"linkedList.h"
 
-typedef struct Node {
-  int value;
-  struct Node* next;
-}node;
-node* createNode(int);
+void insertInList(linkedList *ll,int s,int d){
+    node *temp,*src,*dest;
+    if(ll->head == NULL){
+        src = (node*)malloc(sizeof(node));
+        src->data = s;
+        src->next = NULL;
+        ll->head = src;
+    }
+    dest = (node*)malloc(sizeof(node));
+    dest->data = d;
+    dest->next = NULL;
+    temp = ll->head;
+    while(temp->next!=NULL){
+        temp = temp->next;
+    }
+    temp->next = dest;
+}
 
-typedef struct Graph {
-  int numVertices;
-  struct node** adjLists;
+typedef struct adJacenyList{ // adjcaceny List basic undirected graph 
+    linkedList *list;
+    int vertices;
+    int edges;
 }graph;
 
-// Create a node
-node* createNode(int v) {
-    node* newNode = malloc(sizeof(node));
-    newNode->value = v;
-    newNode->next = NULL;
-    return newNode;
+void initializeGraph(graph *G,int vertices){
+    G->vertices = vertices;
+    G->edges = 0;
+    G->list = (linkedList*)malloc(sizeof(linkedList)*vertices);
+    
 }
 
-
-graph* createAGraph(int vertices) {
-    graph* g = malloc(sizeof(graph));
-    g->numVertices = vertices;
-    g->adjLists = malloc(vertices * sizeof(node*));
-    int i;
-    for(i = 0; i < vertices; i++)
-        g->adjLists[i] = NULL;
-    return g;
+void addEdge(graph *G,int u,int v){
+    insertInList(&(G->list[u]),u,v);
+    insertInList(&(G->list[v]),v,u);
+    G->edges++;
 }
 
-// Add edge
-void addEdge(graph* g, int s, int d) {
-  // Add edge from s to d
-  node* newNode = createNode(d);
-  newNode->next = g->adjLists[s];
-  g->adjLists[s] = newNode;
-
-  // Add edge from d to s
-  newNode = createNode(s);
-  newNode->next = g->adjLists[d];
-  g->adjLists[d] = newNode;
-}
-
-// Print the graph
-void printGraph(graph* g) {
-  int v;
-  for (v = 0; v < g->numVertices; v++) {
-    node* temp = g->adjLists[v];
-    printf("\n Vertex %d\n: ", v);
-    while (temp) {
-      printf("%d -> ", temp->value);
-      temp = temp->next;
+void printGraph(graph *G){
+    for(int i=0;i<G->vertices; i++){
+        printList(G->list[i]);
+        printf("\n");
     }
-    printf("\n");
-  }
 }
 
-int main() {
-    struct Graph* graph = createAGraph(4);
-    addEdge(graph, 0, 1);
-    addEdge(graph, 0, 2);
-    addEdge(graph, 0, 3);
-    addEdge(graph, 1, 2);
-    printGraph(graph);
+void generateGraph(graph *G, float prob,bool selfLoop){ // 0 for self-loops, 1 for no-self loops
+    int r ; 
+    for(int i =0; i<G->vertices;i++){
+        for(int j=i+1;j<G->vertices;j++){
+            r =rand()%10;
+            //printf("\n%d %f",r,prob*10);
+            if(r<=prob*10){
+              if(selfLoop || i!=j)
+                addEdge(G,i,j);
+            }
+        }
+    }
+}
 
-    return 0;
+int main(){
+   srand(time(0));
+   
+    bool selfLoop = false;
+    graph G;
+    int n;
+    float p;
+    printf("\nHow many vertices do you want : ");
+    scanf("%d",&n);
+    printf("\nProbabilty(between 0 and 1) of edge between any two vertices : ");
+    scanf("%f",&p);
+    initializeGraph(&G,n); // 0,1,2
+    generateGraph(&G,p,selfLoop);
+    printGraph(&G);
 }

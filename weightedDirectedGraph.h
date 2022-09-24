@@ -30,7 +30,6 @@ void printList(linkedList ll,int i){
     printf("NULL");
 }
 
-
 typedef struct Edge{
     int src,dest,weight;
 }edge;
@@ -54,7 +53,6 @@ edge* generateEdges(int v,int n,double prob){
             if(i!=j){
                 edges[k++] = *(createEdge(i,j,value));
             }
-            
             r2 = rand()%10;
             if(r2<5){
                 i++;
@@ -75,12 +73,33 @@ void printEdges(edge *edges,int n){
     }
 }
 
+ int removeParallelEdges(edge *edges,int n){
+     int i,j,k;
+  for ( i = 0; i < n; i ++)  
+    {  
+        for (  j = i + 1;j < n; j++)  
+        {  
+            if ( edges[i].src == edges[j].src && edges[i].dest == edges[j].dest)  
+            {  
+                for ( k = j; k < n - 1; k++)  
+                {  
+                    edges[k].src = edges[k + 1].src;
+                    edges[k].dest = edges[k+1].dest; 
+                    edges[k].weight = edges[k+1].weight; 
+                }  
+                n--; 
+                j--;
+            }        
+        }  
+    }  
+    return n;
+ }
+
 typedef struct weightedDirectedGraph{
     linkedList *list;
     int vertices;
     int edges;
 }wdgraph;
-
 
 void insertInList(linkedList *ll,int d,int w){
     node *temp,*src,*dest;
@@ -126,6 +145,7 @@ void createGraph(wdgraph *G, edge *edges,int n){
  
 
 }
+
 void printGraph(wdgraph* G)
 {
     for(int i=0;i<G->vertices; i++){
@@ -133,3 +153,4 @@ void printGraph(wdgraph* G)
         printf("\n");
     }
 }
+
